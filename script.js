@@ -129,6 +129,7 @@ saveChangesBtn.addEventListener("click", () => {
   localStorage.setItem("loggedInUser", JSON.stringify(loggedInUser));
 
   updateStatistics();
+  renderTransaction();
 });
 
 menuBtn.addEventListener("click", () => {

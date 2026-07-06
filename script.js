@@ -69,10 +69,10 @@ const dark = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width=
 
 let usersArr = JSON.parse(localStorage.getItem("Users")) || [];
 let loggedInUser = JSON.parse(localStorage.getItem("loggedInUser")) || [];
-// let transactionArr = JSON.parse(localStorage.getItem("transactions")) || [];
+let transactionArr = JSON.parse(localStorage.getItem("transactions")) || [];
 
-let transactionArr = loggedInUser[0]?.transactions || [];
-localStorage.setItem("transactions", JSON.stringify(transactionArr));
+
+console.log(transactionArr);
 
 let isEdit = null;
 let isRegisterScreen = false;
@@ -171,6 +171,8 @@ logoutBtn.addEventListener("click", () => {
 
   loggedInUser = [];
   localStorage.setItem("loggedInUser", JSON.stringify(loggedInUser));
+  transactionArr = [];
+  localStorage.setItem("transactions", JSON.stringify(transactionArr));
   registerAndLogin.style.display = "flex";
 });
 
@@ -234,16 +236,18 @@ loginForm.addEventListener("submit", (e) => {
     return username == val.username && password == val.password;
   });
 
+
   if (loggedInUser.length == 1) {
     isRegisterScreen = null;
-    transactionArr = loggedInUser[0]?.transactions;
     statistics = loggedInUser[0]?.statistics;
     updateStatistics();
     updateChart();
-    renderTransaction();
     currentTheme();
     toggleForm();
     localStorage.setItem("loggedInUser", JSON.stringify(loggedInUser));
+    transactionArr = loggedInUser[0].transactions;
+    localStorage.setItem("transactions", JSON.stringify(transactionArr));
+    renderTransaction();
   } else {
     alert("You have not registered yet !");
   }
@@ -525,44 +529,41 @@ sortBy.addEventListener("change", (e) => {
 });
 
 function convertToCSV(data) {
-    if (data.length === 0) return "";
+  if (data.length === 0) return "";
 
-    const headers = Object.keys(data[0]);
+  const headers = Object.keys(data[0]);
 
-    const rows = data.map(transaction =>
-        headers.map(header => `"${transaction[header] ?? ""}"`).join(",")
-    );
+  const rows = data.map((transaction) =>
+    headers.map((header) => `"${transaction[header] ?? ""}"`).join(","),
+  );
 
-    return [headers.join(","), ...rows].join("\n");
+  return [headers.join(","), ...rows].join("\n");
 }
 
+const downloadCSV = (data) => {
+  if (data.length === 0) {
+    alert("No transactions found.");
+    return;
+  }
 
-const downloadCSV = (data) =>  {
-if (data.length === 0) {
-        alert("No transactions found.");
-        return;
-    }
+  const csv = convertToCSV(data);
 
-    const csv = convertToCSV(data);
+  const blob = new Blob([csv], {
+    type: "text/csv;charset=utf-8;",
+  });
 
-    const blob = new Blob([csv], {
-        type: "text/csv;charset=utf-8;"
-    });
+  const url = URL.createObjectURL(blob);
 
-    const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "FinTrack_Transactions.csv";
 
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "FinTrack_Transactions.csv";
+  document.body.appendChild(a);
+  a.click();
 
-    document.body.appendChild(a);
-    a.click();
-
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-}
-
-
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+};
 
 downloadCsvBtn.addEventListener("click", () => {
   let transactions = transactionArr || [];
@@ -625,7 +626,6 @@ const chart = new Chart(ctx, {
   },
 });
 
-
 const updateChart = () => {
   chart.data.datasets[0].data = [parseFloat(statistics.totalIncomeCount)];
   chart.data.datasets[1].data = [parseFloat(statistics.totalExpenseCount)];
@@ -642,5 +642,3 @@ const updateChart = () => {
 
   chart.update();
 };
-
-
